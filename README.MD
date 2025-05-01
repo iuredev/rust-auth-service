@@ -6,7 +6,7 @@ This project is a robust authentication service built with Rust. It provides sec
 
 ## Features
 
-- Secure user authentication with JWT tokens (In Progress)
+- Secure user authentication (In Progress)
 - PostgreSQL database integration with SQLx
 - Containerized setup with Docker Compose
 - Easy local development environment setup
@@ -15,7 +15,7 @@ This project is a robust authentication service built with Rust. It provides sec
 
 - [Docker](https://www.docker.com/get-started)
 - [Docker Compose](https://docs.docker.com/compose/install/)
-- [Rust](https://www.rust-lang.org/tools/install) (for local development)
+- [Rust](https://www.rust-lang.org/tools/install)
 
 ## Getting Started
 
@@ -28,6 +28,7 @@ docker-compose up -d postgres
 ```
 
 This will start a PostgreSQL container with the following configuration:
+You can configure as you want, but the default configuration that I used is as follows: (Locally)
 
 - **Container name**: rust_auth_pg
 - **Username**: postgres
@@ -46,6 +47,7 @@ postgres://postgres:postgres@localhost:5432/auth_db
 ## Project Structure
 
 - `src/` - Rust source code
+- `tests/` - Rust test files
 - `migrations/` - Database migration files
 - `compose.yml` - Docker Compose configuration
 
@@ -67,6 +69,12 @@ To stop all services:
 
 ```bash
 docker-compose down
+```
+
+## Running the Rust Application
+
+```bash
+cargo run
 ```
 
 ## Data Persistence
