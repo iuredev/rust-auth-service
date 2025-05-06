@@ -1,18 +1,18 @@
-use crate::models::user::{User, UserInput, UserOutput};
+use crate::{
+    errors::my_error::MyError,
+    models::user::{User, UserInput, UserOutput},
+};
 use chrono::Utc;
 use sqlx::{Pool, Postgres};
 
-pub async fn create_user(
-    pool: &Pool<Postgres>,
-    user: UserInput,
-) -> Result<UserOutput, sqlx::Error> {
+pub async fn create_user(pool: &Pool<Postgres>, user: UserInput) -> Result<UserOutput, MyError> {
     let user = User::new(
         user.name.unwrap_or_default(),
         user.email.unwrap_or_default(),
         user.password.unwrap_or_default(),
     );
 
-    sqlx::query_as!(
+    let created_user = sqlx::query_as!(
         UserOutput,
         r#"
         INSERT INTO users (id, name, email, password, created_at, updated_at)
@@ -27,13 +27,12 @@ pub async fn create_user(
         user.updated_at
     )
     .fetch_one(pool)
-    .await
+    .await?;
+
+    Ok(created_user)
 }
 
-pub async fn get_user_by_id(
-    pool: &Pool<Postgres>,
-    id: uuid::Uuid,
-) -> Result<UserOutput, sqlx::Error> {
+pub async fn get_user_by_id(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<UserOutput, MyError> {
     println!("ID: {}", id);
 
     let user: UserOutput = sqlx::query_as::<_, UserOutput>(
@@ -71,7 +70,7 @@ pub async fn update_user(
     Ok(user)
 }
 
-pub async fn delete_user(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<(), sqlx::Error> {
+pub async fn delete_user(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<(), MyError> {
     sqlx::query("DELETE FROM users WHERE id = $1")
         .bind(id)
         .execute(pool)
