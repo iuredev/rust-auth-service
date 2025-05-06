@@ -1,6 +1,7 @@
 use crate::config::init_pool;
 use crate::db::user::{create_user, delete_user, get_user_by_id, update_user};
 use crate::models::user::{UserInput, UserOutput};
+use crate::utils::password::hash_password;
 use axum::extract::{Json, Path};
 use axum::http::StatusCode;
 
@@ -26,10 +27,12 @@ pub async fn create_user_handler(
         return Err(StatusCode::BAD_REQUEST);
     }
 
+    let hash_password = hash_password(&payload.password.unwrap()).unwrap();
+
     let user = UserInput {
         name: payload.name,
         email: payload.email,
-        password: payload.password,
+        password: Some(hash_password),
     };
 
     let result = create_user(&pool, user).await;
@@ -42,12 +45,17 @@ pub async fn create_user_handler(
 
 pub async fn update_user_handler(
     Path(user_id): Path<uuid::Uuid>,
-    Json(payload): Json<UserInput>,
+    Json(mut payload): Json<UserInput>,
 ) -> Result<Json<UserOutput>, StatusCode> {
     let pool: sqlx::Pool<sqlx::Postgres> = init_pool().await;
 
     if payload.name.is_none() && payload.email.is_none() && payload.password.is_none() {
         return Err(StatusCode::BAD_REQUEST);
+    }
+
+    if payload.password.is_some() {
+        let hash_password = hash_password(&payload.password.unwrap()).unwrap();
+        payload.password = Some(hash_password);
     }
 
     let user = UserInput {
