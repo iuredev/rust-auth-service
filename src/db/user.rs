@@ -12,7 +12,7 @@ pub async fn create_user(pool: &Pool<Postgres>, user: UserInput) -> Result<UserO
         user.password.unwrap_or_default(),
     );
 
-    let created_user = sqlx::query_as!(
+    let result = sqlx::query_as!(
         UserOutput,
         r#"
         INSERT INTO users (id, name, email, password, created_at, updated_at)
@@ -29,27 +29,38 @@ pub async fn create_user(pool: &Pool<Postgres>, user: UserInput) -> Result<UserO
     .fetch_one(pool)
     .await?;
 
-    Ok(created_user)
+    Ok(result)
 }
 
 pub async fn get_user_by_id(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<UserOutput, MyError> {
-    println!("ID: {}", id);
-
-    let user: UserOutput = sqlx::query_as::<_, UserOutput>(
+    let user = sqlx::query_as::<_, UserOutput>(
         "SELECT id, name, email, created_at, updated_at FROM users WHERE id = $1",
     )
     .bind(id)
     .fetch_one(pool)
-    .await?;
+    .await;
 
-    Ok(user)
+    if user.is_err() {
+        return Err(MyError::NotFound);
+    }
+
+    Ok(user.unwrap())
+}
+
+pub async fn get_users(pool: &Pool<Postgres>) -> Result<Vec<UserOutput>, MyError> {
+    let users =
+        sqlx::query_as::<_, UserOutput>("SELECT id name, email, created_at, updated_at FROM users")
+            .fetch_all(pool)
+            .await?;
+
+    Ok(users)
 }
 
 pub async fn update_user(
     pool: &Pool<Postgres>,
     id: uuid::Uuid,
     user: UserInput,
-) -> Result<UserOutput, sqlx::Error> {
+) -> Result<UserOutput, MyError> {
     let user = sqlx::query_as::<_, UserOutput>(
         r#"
             UPDATE users SET name = COALESCE($1, name), 
@@ -65,9 +76,17 @@ pub async fn update_user(
     .bind(id)
     .bind(Utc::now())
     .fetch_one(pool)
-    .await?;
+    .await;
 
-    Ok(user)
+    if user.is_err() {
+        match user.as_ref().unwrap_err() {
+            sqlx::Error::RowNotFound => return Err(MyError::NotFound),
+            sqlx::Error::Database(_) => return Err(MyError::DatabaseError(user.unwrap_err())),
+            _ => return Err(MyError::Internal),
+        };
+    };
+
+    Ok(user.unwrap())
 }
 
 pub async fn delete_user(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<(), MyError> {

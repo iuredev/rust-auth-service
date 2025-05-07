@@ -4,19 +4,15 @@ use crate::errors::my_error::MyError;
 use crate::models::user::{UserInput, UserOutput};
 use crate::utils::password::hash_password;
 use axum::extract::{Json, Path};
-use axum::http::StatusCode;
 
 pub async fn get_user_handler(
     Path(user_id): Path<uuid::Uuid>,
-) -> Result<Json<UserOutput>, StatusCode> {
+) -> Result<Json<UserOutput>, MyError> {
     let pool: sqlx::Pool<sqlx::Postgres> = init_pool().await;
 
-    let user = get_user_by_id(&pool, user_id).await;
+    let user = get_user_by_id(&pool, user_id).await?;
 
-    match user {
-        Ok(user) => Ok(Json(user)),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    Ok(Json(user))
 }
 
 pub async fn create_user_handler(
@@ -25,15 +21,15 @@ pub async fn create_user_handler(
     let pool: sqlx::Pool<sqlx::Postgres> = init_pool().await;
 
     if payload.name.is_none() || payload.email.is_none() || payload.password.is_none() {
-        return Err(MyError::BadRequest);
+        return Err(MyError::Validation(
+            "Name, email and password are required".to_string(),
+        ));
     }
-
-    let hash_password = hash_password(&payload.password.unwrap()).unwrap();
 
     let user = UserInput {
         name: payload.name,
         email: payload.email,
-        password: Some(hash_password),
+        password: payload.password,
     };
 
     let result = create_user(&pool, user).await?;
@@ -44,11 +40,13 @@ pub async fn create_user_handler(
 pub async fn update_user_handler(
     Path(user_id): Path<uuid::Uuid>,
     Json(mut payload): Json<UserInput>,
-) -> Result<Json<UserOutput>, StatusCode> {
+) -> Result<Json<UserOutput>, MyError> {
     let pool: sqlx::Pool<sqlx::Postgres> = init_pool().await;
 
     if payload.name.is_none() && payload.email.is_none() && payload.password.is_none() {
-        return Err(StatusCode::BAD_REQUEST);
+        return Err(MyError::Validation(
+            "You must provide at least one field to update".to_string(),
+        ));
     }
 
     if payload.password.is_some() {
@@ -62,23 +60,15 @@ pub async fn update_user_handler(
         password: payload.password,
     };
 
-    let result = update_user(&pool, user_id, user).await;
+    let result = update_user(&pool, user_id, user).await?;
 
-    match result {
-        Ok(user) => Ok(Json(user)),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    Ok(Json(result))
 }
 
-pub async fn delete_user_handler(
-    Path(user_id): Path<uuid::Uuid>,
-) -> Result<Json<String>, StatusCode> {
+pub async fn delete_user_handler(Path(user_id): Path<uuid::Uuid>) -> Result<Json<String>, MyError> {
     let pool: sqlx::Pool<sqlx::Postgres> = init_pool().await;
 
-    let result = delete_user(&pool, user_id).await;
+    delete_user(&pool, user_id).await?;
 
-    match result {
-        Ok(()) => Ok(Json("User deleted successfully".to_string())),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    Ok(Json("User deleted successfully".to_string()))
 }

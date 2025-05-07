@@ -1,6 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::utils::password::hash_password;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserInput {
     pub name: Option<String>,
@@ -37,7 +39,7 @@ impl User {
             id: uuid::Uuid::new_v4(),
             name,
             email,
-            password,
+            password: hash_password(password.as_str()).unwrap(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

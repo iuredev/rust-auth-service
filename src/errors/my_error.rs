@@ -10,7 +10,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum MyError {
-    #[error("Database error: {0}")]
+    #[error("Database: {0}")]
     DatabaseError(#[from] SqlxError),
 
     #[error("Hashing error: {0}")]
@@ -42,7 +42,7 @@ impl IntoResponse for MyError {
             MyError::BadRequest => (StatusCode::BAD_REQUEST, self.to_string()),
             MyError::HashingError(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             MyError::JsonError(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
-            MyError::Validation(msg) => (StatusCode::BAD_REQUEST, msg.to_string()),
+            MyError::Validation(_) => (StatusCode::BAD_REQUEST, self.to_string()),
             MyError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             MyError::Unauthorized => (StatusCode::UNAUTHORIZED, self.to_string()),
             MyError::Internal => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
