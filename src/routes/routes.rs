@@ -1,16 +1,17 @@
-use axum::{
-    Router,
-    routing::{delete, get, patch, post},
-};
+use axum::{ Router, routing::{ delete, get, patch, post } };
 
 use crate::handlers::user::{
-    create_user_handler, delete_user_handler, get_user_handler, update_user_handler,
+    create_user_handler,
+    delete_user_handler,
+    get_user_handler,
+    update_user_handler,
 };
 
-pub fn routes() -> Router {
-    let root_router = Router::new().route("/", get(|| async { "Hello, World!" }));
-
-    // TODO: try to implement one instance of pool db and reuse it
+pub fn routes() -> Router<sqlx::Pool<sqlx::Postgres>> {
+    let root_router = Router::new().route(
+        "/",
+        get(|| async { "Hello, World!" })
+    );
 
     let user_router = Router::new()
         .route("/users/{user_id}", get(get_user_handler))
