@@ -1,4 +1,4 @@
-use rust_auth_service::utils::password::{hash_password, verify_password};
+use rust_auth_service::services::auth::{hash_password, verify_password};
 
 #[test]
 fn test_hash_password() {

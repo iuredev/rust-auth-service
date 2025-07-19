@@ -1,11 +1,11 @@
 use crate::{
     errors::my_error::MyError,
-    models::user::{User, UserInput, UserOutput},
+    models::user::{User, UserOutput, UserRegister},
 };
 use chrono::Utc;
 use sqlx::{Pool, Postgres};
 
-pub async fn create_user(pool: &Pool<Postgres>, user: UserInput) -> Result<UserOutput, MyError> {
+pub async fn create_user(pool: &Pool<Postgres>, user: UserRegister) -> Result<UserOutput, MyError> {
     let user = User::new(
         user.name.unwrap_or_default(),
         user.email.unwrap_or_default(),
@@ -59,7 +59,7 @@ pub async fn get_users(pool: &Pool<Postgres>) -> Result<Vec<UserOutput>, MyError
 pub async fn update_user(
     pool: &Pool<Postgres>,
     id: uuid::Uuid,
-    user: UserInput,
+    user: UserRegister,
 ) -> Result<UserOutput, MyError> {
     let user = sqlx::query_as::<_, UserOutput>(
         r#"
@@ -96,4 +96,16 @@ pub async fn delete_user(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<(), My
         .await?;
 
     Ok(())
+}
+
+pub async fn get_user_by_email(pool: &Pool<Postgres>, email: String) -> Result<User, MyError> {
+    let user = sqlx::query_as::<_, User>(
+        "SELECT id, name, email, password, created_at, updated_at FROM users WHERE email = $1",
+    )
+    .bind(email)
+    .fetch_optional(pool)
+    .await?
+    .ok_or(MyError::NotFound);
+
+    Ok(user.unwrap())
 }

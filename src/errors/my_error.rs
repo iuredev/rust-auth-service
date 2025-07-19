@@ -31,6 +31,9 @@ pub enum MyError {
     #[error("Unauthorized")]
     Unauthorized,
 
+    #[error("Login error: {0}")]
+    LoginError(String),
+
     #[error("Internal server error")]
     Internal,
 }
@@ -46,6 +49,7 @@ impl IntoResponse for MyError {
             MyError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             MyError::Unauthorized => (StatusCode::UNAUTHORIZED, self.to_string()),
             MyError::Internal => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
+            MyError::LoginError(message) => (StatusCode::UNAUTHORIZED, message.to_string()),
         };
 
         let body = Json(json!({

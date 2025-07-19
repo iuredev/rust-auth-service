@@ -1,10 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::utils::password::hash_password;
+use crate::services::auth::hash_password;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UserInput {
+pub struct UserRegister {
     pub name: Option<String>,
     pub email: Option<String>,
     pub password: Option<String>,
@@ -19,7 +19,7 @@ pub struct UserOutput {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
     pub id: uuid::Uuid,
     pub name: String,
@@ -32,7 +32,7 @@ pub struct User {
 impl User {
     pub fn new(name: String, email: String, password: String) -> Self {
         let name = name.trim().to_string();
-        let email = email.trim().to_string();
+        let email = email.trim().to_string().to_lowercase();
         let password = password.trim().to_string();
 
         Self {
