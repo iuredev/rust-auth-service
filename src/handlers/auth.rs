@@ -1,7 +1,7 @@
 use axum::extract::{Json, State};
 
 use crate::{
-    db::{auth::create_refresh_token, user::get_user_by_email},
+    db::{auth::upsert_refresh_token, user::get_user_by_email},
     errors::my_error::MyError,
     models::auth::{Login, TokenResponse},
     services::{auth::verify_password, jwt::generate_tokens},
@@ -28,7 +28,7 @@ pub async fn login_handler(
 
     let (access_token, refresh_token) = generate_tokens(&user)?;
 
-    let _ = create_refresh_token(&pool, user.id, &refresh_token).await;
+    let _ = upsert_refresh_token(&pool, user.id, &refresh_token).await;
 
     Ok(Json(TokenResponse {
         access_token,

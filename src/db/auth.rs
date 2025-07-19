@@ -2,7 +2,7 @@ use sqlx::{Pool, Postgres};
 
 use crate::{errors::my_error::MyError, models::auth::RefreshToken};
 
-pub async fn create_refresh_token(
+pub async fn upsert_refresh_token(
     pool: &Pool<Postgres>,
     user_id: uuid::Uuid,
     refresh_token: &String,
@@ -11,9 +11,13 @@ pub async fn create_refresh_token(
 
     let result = sqlx::query(
         r#"
-            INSERT INTO refresh_tokens (id, token, user_id, expires_at)
-            VALUES ($1, $2, $3, $4)
-        "#,
+        INSERT INTO refresh_tokens (id, token, user_id, expires_at)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (user_id)
+        DO UPDATE SET
+            token = EXCLUDED.token,
+            expires_at = EXCLUDED.expires_at
+    "#,
     )
     .bind(refresh_token.id)
     .bind(refresh_token.token)

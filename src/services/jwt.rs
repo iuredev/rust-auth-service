@@ -1,4 +1,4 @@
-use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
+use jsonwebtoken::{EncodingKey, Header, encode};
 
 use crate::{
     errors::my_error::MyError,
@@ -27,7 +27,7 @@ pub fn generate_tokens(user: &User) -> Result<(String, String), MyError> {
     let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set in .env file");
 
     let access_token = encode(
-        &Header::new(Algorithm::HS256),
+        &Header::default(),
         &access_claim,
         &EncodingKey::from_secret(secret.as_bytes()),
     )
