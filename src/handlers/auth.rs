@@ -1,10 +1,11 @@
 use axum::extract::{Json, State};
 
 use crate::{
+    auth::jwt::generate_tokens,
     db::{auth::upsert_refresh_token, user::get_user_by_email},
     errors::my_error::MyError,
     models::auth::{Login, TokenResponse},
-    services::{auth::verify_password, jwt::generate_tokens},
+    services::password::verify_password,
 };
 
 pub async fn login_handler(

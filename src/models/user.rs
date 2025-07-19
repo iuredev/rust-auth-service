@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::services::auth::hash_password;
+use crate::services::password::hash_password;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserRegister {

@@ -1,7 +1,7 @@
 use crate::db::user::{create_user, delete_user, get_user_by_id, update_user};
 use crate::errors::my_error::MyError;
 use crate::models::user::{UserOutput, UserRegister};
-use crate::services::auth::hash_password;
+use crate::services::password::hash_password;
 use axum::extract::{Json, Path, State};
 
 pub async fn get_user_handler(
