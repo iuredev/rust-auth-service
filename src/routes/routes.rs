@@ -1,11 +1,10 @@
+use crate::handlers::{
+    auth::{login_handler, logout_handler},
+    user::{create_user_handler, delete_user_handler, get_user_handler, update_user_handler},
+};
 use axum::{
     Router,
     routing::{delete, get, patch, post},
-};
-
-use crate::handlers::{
-    auth::login_handler,
-    user::{create_user_handler, delete_user_handler, get_user_handler, update_user_handler},
 };
 
 pub fn routes() -> Router<sqlx::Pool<sqlx::Postgres>> {
@@ -18,7 +17,13 @@ pub fn routes() -> Router<sqlx::Pool<sqlx::Postgres>> {
         .route("/users/{user_id}", delete(delete_user_handler))
         .route("/login", post(login_handler));
 
-    let app_routes = Router::new().merge(root_router).merge(user_router);
+    // protected router
+    let protected = Router::new().route("/logout", post(logout_handler));
+
+    let app_routes = Router::new()
+        .merge(root_router)
+        .merge(user_router)
+        .merge(protected);
     let app = Router::new().nest("/api", app_routes);
     app
 }

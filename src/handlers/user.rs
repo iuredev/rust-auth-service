@@ -1,12 +1,12 @@
-use crate::db::user::{create_user, delete_user, get_user_by_id, update_user};
+use crate::db::user::{ create_user, delete_user, get_user_by_id, update_user };
 use crate::errors::my_error::MyError;
-use crate::models::user::{UserOutput, UserRegister};
+use crate::models::user::{ UserOutput, UserRegister };
 use crate::services::password::hash_password;
-use axum::extract::{Json, Path, State};
+use axum::extract::{ Json, Path, State };
 
 pub async fn get_user_handler(
     State(pool): State<sqlx::Pool<sqlx::Postgres>>,
-    Path(user_id): Path<uuid::Uuid>,
+    Path(user_id): Path<uuid::Uuid>
 ) -> Result<Json<UserOutput>, MyError> {
     let user = get_user_by_id(&pool, user_id).await?;
 
@@ -15,12 +15,10 @@ pub async fn get_user_handler(
 
 pub async fn create_user_handler(
     State(pool): State<sqlx::Pool<sqlx::Postgres>>,
-    Json(payload): Json<UserRegister>,
+    Json(payload): Json<UserRegister>
 ) -> Result<Json<UserOutput>, MyError> {
     if payload.name.is_none() || payload.email.is_none() || payload.password.is_none() {
-        return Err(MyError::Validation(
-            "Name, email and password are required".to_string(),
-        ));
+        return Err(MyError::Validation("Name, email and password are required".to_string()));
     }
 
     let user: UserRegister = UserRegister {
@@ -37,12 +35,12 @@ pub async fn create_user_handler(
 pub async fn update_user_handler(
     State(pool): State<sqlx::Pool<sqlx::Postgres>>,
     Path(user_id): Path<uuid::Uuid>,
-    Json(mut payload): Json<UserRegister>,
+    Json(mut payload): Json<UserRegister>
 ) -> Result<Json<UserOutput>, MyError> {
     if payload.name.is_none() && payload.email.is_none() && payload.password.is_none() {
-        return Err(MyError::Validation(
-            "You must provide at least one field to update".to_string(),
-        ));
+        return Err(
+            MyError::Validation("You must provide at least one field to update".to_string())
+        );
     }
 
     if payload.password.is_some() {
@@ -63,7 +61,7 @@ pub async fn update_user_handler(
 
 pub async fn delete_user_handler(
     State(pool): State<sqlx::Pool<sqlx::Postgres>>,
-    Path(user_id): Path<uuid::Uuid>,
+    Path(user_id): Path<uuid::Uuid>
 ) -> Result<Json<String>, MyError> {
     delete_user(&pool, user_id).await?;
 

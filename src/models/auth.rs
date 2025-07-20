@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize };
 
 #[derive(Deserialize)]
 pub struct Login {
@@ -16,6 +16,7 @@ pub struct TokenResponse {
 pub struct Claims {
     pub sub: uuid::Uuid,
     pub email: String,
+
     // pub role: String,
     pub iat: usize,
     pub exp: usize,
