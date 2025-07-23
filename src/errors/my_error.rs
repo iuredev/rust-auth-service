@@ -36,6 +36,9 @@ pub enum MyError {
 
     #[error("Internal server error")]
     Internal,
+
+    #[error("Too many requests")]
+    TooManyRequests,
 }
 
 impl IntoResponse for MyError {
@@ -50,6 +53,7 @@ impl IntoResponse for MyError {
             MyError::Unauthorized => (StatusCode::UNAUTHORIZED, self.to_string()),
             MyError::Internal => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             MyError::LoginError(message) => (StatusCode::UNAUTHORIZED, message.to_string()),
+            MyError::TooManyRequests => (StatusCode::TOO_MANY_REQUESTS, self.to_string()),
         };
 
         let body = Json(json!({

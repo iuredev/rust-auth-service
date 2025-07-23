@@ -41,3 +41,6 @@ sqlx-cli = { version = "0.8.6", features = ["postgres"] }
 
 #Env
 dotenvy = "^0.15.7"
+
+#Redis
+redis = { version = "0.32", features = ["tokio-comp", "connection-manager"] }

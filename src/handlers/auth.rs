@@ -4,18 +4,21 @@ use axum::{
 };
 
 use crate::{
-    auth::jwt::{self, generate_tokens},
+    auth::jwt::generate_tokens,
     db::{
         auth::{revoke_refresh_token, upsert_refresh_token},
         user::get_user_by_email,
     },
     errors::my_error::MyError,
-    models::auth::{Claims, Login, TokenResponse},
+    models::{
+        app::AppState,
+        auth::{Claims, Login, TokenResponse},
+    },
     services::password::verify_password,
 };
 
 pub async fn login_handler(
-    State(pool): State<sqlx::Pool<sqlx::Postgres>>,
+    State(app_state): State<AppState>,
     Json(payload): Json<Login>,
 ) -> Result<Json<TokenResponse>, MyError> {
     if payload.email.is_empty() || payload.password.is_empty() {
@@ -24,7 +27,7 @@ pub async fn login_handler(
         ));
     }
 
-    let user = get_user_by_email(&pool, payload.email.clone()).await?;
+    let user = get_user_by_email(&app_state.pool, payload.email.clone()).await?;
     let verify_password = verify_password(&user.password, &payload.password).unwrap();
 
     if !verify_password {
@@ -35,7 +38,7 @@ pub async fn login_handler(
 
     let (access_token, refresh_token) = generate_tokens(&user)?;
 
-    let _ = upsert_refresh_token(&pool, user.id, &refresh_token).await;
+    let _ = upsert_refresh_token(&app_state.pool, user.id, &refresh_token).await;
 
     Ok(Json(TokenResponse {
         access_token,
@@ -59,9 +62,9 @@ pub async fn login_handler(
 // HANDLER USED WITH MIDDLEWARE AUTH
 pub async fn logout_handler(
     Extension(claims): Extension<Claims>,
-    State(pool): State<sqlx::Pool<sqlx::Postgres>>,
+    State(app_state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, MyError> {
-    let _ = revoke_refresh_token(&pool, claims.sub).await;
+    let _ = revoke_refresh_token(&app_state.pool, claims.sub).await;
 
     Ok(Json(serde_json::json!({
         "message": "Logged out successfully",
