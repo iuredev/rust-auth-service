@@ -50,7 +50,7 @@ pub fn decode_access_token(token: &str) -> Result<Claims, MyError> {
         &DecodingKey::from_secret(secret.as_bytes()),
         &Validation::default(),
     )
-    .map_err(|err| MyError::Validation(err.to_string()))?;
+    .map_err(|_| MyError::Validation("The token has expired or is invalid".to_string()))?;
 
     Ok(data.claims)
 }

@@ -22,7 +22,7 @@ pub enum MyError {
     #[error("Bad request")]
     BadRequest,
 
-    #[error("Validation error: {0}")]
+    #[error("{0}")]
     Validation(String),
 
     #[error("Not found")]
@@ -45,7 +45,7 @@ impl IntoResponse for MyError {
             MyError::BadRequest => (StatusCode::BAD_REQUEST, self.to_string()),
             MyError::HashingError(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             MyError::JsonError(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
-            MyError::Validation(_) => (StatusCode::BAD_REQUEST, self.to_string()),
+            MyError::Validation(_) => (StatusCode::UNAUTHORIZED, self.to_string()),
             MyError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             MyError::Unauthorized => (StatusCode::UNAUTHORIZED, self.to_string()),
             MyError::Internal => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),

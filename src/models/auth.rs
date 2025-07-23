@@ -1,4 +1,4 @@
-use serde::{ Deserialize, Serialize };
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct Login {
@@ -12,7 +12,7 @@ pub struct TokenResponse {
     pub refresh_token: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Claims {
     pub sub: uuid::Uuid,
     pub email: String,
