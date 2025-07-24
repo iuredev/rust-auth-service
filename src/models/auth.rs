@@ -16,8 +16,8 @@ pub struct TokenResponse {
 pub struct Claims {
     pub sub: uuid::Uuid,
     pub email: String,
-
     // pub role: String,
+    pub jti: String,
     pub iat: usize,
     pub exp: usize,
 }

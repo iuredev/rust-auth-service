@@ -1,12 +1,12 @@
-use axum::{ body::Body, extract::{ State }, http::Request, middleware::Next, response::Response };
+use axum::{body::Body, extract::State, http::Request, middleware::Next, response::Response};
 use redis::AsyncCommands;
 
-use crate::{ errors::my_error::MyError, models::app::AppState };
+use crate::{errors::my_error::MyError, models::app::AppState};
 
 pub async fn rate_limit_middleware(
     State(app_state): State<AppState>,
     request: Request<Body>,
-    next: Next
+    next: Next,
 ) -> Result<Response, MyError> {
     let mut redis_conn = app_state.redis;
     let headers = request.headers();

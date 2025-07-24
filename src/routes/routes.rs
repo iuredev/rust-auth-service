@@ -1,23 +1,19 @@
 use crate::{
     handlers::{
-        auth::{ login_handler, logout_handler },
-        user::{ create_user_handler, delete_user_handler, get_user_handler, update_user_handler },
+        auth::{login_handler, logout_handler},
+        user::{create_user_handler, delete_user_handler, get_user_handler, update_user_handler},
     },
-    middleware::{ auth::auth_middleware, rate_limit::rate_limit_middleware },
+    middleware::{auth::auth_middleware, rate_limit::rate_limit_middleware},
     models::app::AppState,
 };
 use axum::{
     Router,
-    middleware::{ from_fn, from_fn_with_state },
-    routing::{ delete, get, patch, post },
+    middleware::from_fn_with_state,
+    routing::{delete, get, patch, post},
 };
 
 pub fn routes(state: &AppState) -> Router<AppState> {
-    let app_state = state.clone();
-    let root_router = Router::new().route(
-        "/",
-        get(|| async { "Hello, World!" })
-    );
+    let root_router = Router::new().route("/", get(|| async { "Hello, World!" }));
     let user_router = Router::new()
         .route("/users/{user_id}", get(get_user_handler))
         .route("/users", post(create_user_handler))
@@ -28,10 +24,13 @@ pub fn routes(state: &AppState) -> Router<AppState> {
     // protected router
     let protected = Router::new()
         .route("/logout", post(logout_handler))
-        .layer(from_fn(auth_middleware))
-        .layer(from_fn_with_state(app_state, rate_limit_middleware));
+        .layer(from_fn_with_state(state.clone(), auth_middleware))
+        .layer(from_fn_with_state(state.clone(), rate_limit_middleware));
 
-    let app_routes = Router::new().merge(root_router).merge(user_router).merge(protected);
+    let app_routes = Router::new()
+        .merge(root_router)
+        .merge(user_router)
+        .merge(protected);
 
     let app = Router::new().nest("/api", app_routes);
 

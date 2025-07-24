@@ -1,6 +1,6 @@
 use axum::{
     body::Body,
-    extract::FromRequestParts,
+    extract::{FromRequestParts, State},
     http::request::{Parts, Request},
     middleware::Next,
     response::Response,
@@ -9,7 +9,11 @@ use axum::{
 use headers::{Authorization, HeaderMapExt, authorization::Bearer};
 use std::future::Future;
 
-use crate::{auth::jwt::decode_access_token, errors::my_error::MyError, models::auth::Claims};
+use crate::{
+    auth::auth::{decode_access_token, validate_jwt},
+    errors::my_error::MyError,
+    models::{app::AppState, auth::Claims},
+};
 
 // middeware Extractor Pattern Axum
 impl<S> FromRequestParts<S> for Claims
@@ -38,9 +42,13 @@ where
 
 // common middleware
 
-pub async fn auth_middleware(mut request: Request<Body>, next: Next) -> Result<Response, MyError> {
+pub async fn auth_middleware(
+    State(app_state): State<AppState>,
+    mut request: Request<Body>,
+    next: Next,
+) -> Result<Response, MyError> {
     let started_at = std::time::Instant::now();
-
+    let mut redis_conn = app_state.redis;
     let auth_header = request
         .headers()
         .typed_get::<Authorization<Bearer>>()
@@ -48,7 +56,7 @@ pub async fn auth_middleware(mut request: Request<Body>, next: Next) -> Result<R
 
     let token = auth_header.token();
 
-    let claims = decode_access_token(token)?;
+    let claims = validate_jwt(&mut redis_conn, token).await?;
 
     request.extensions_mut().insert(claims);
 

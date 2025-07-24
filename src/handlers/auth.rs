@@ -2,9 +2,10 @@ use axum::{
     Extension,
     extract::{Json, State},
 };
+use redis::AsyncCommands;
 
 use crate::{
-    auth::jwt::generate_tokens,
+    auth::auth::generate_tokens,
     db::{
         auth::{revoke_refresh_token, upsert_refresh_token},
         user::get_user_by_email,
@@ -65,6 +66,13 @@ pub async fn logout_handler(
     State(app_state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, MyError> {
     let _ = revoke_refresh_token(&app_state.pool, claims.sub).await;
+
+    let mut redis_conn = app_state.redis;
+    let key_jti = format!("jti_revoked:{}", claims.jti);
+    let _: bool = redis_conn
+        .set_ex(key_jti, true, 600)
+        .await
+        .map_err(|_| MyError::Internal)?;
 
     Ok(Json(serde_json::json!({
         "message": "Logged out successfully",
