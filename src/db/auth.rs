@@ -11,7 +11,7 @@ pub async fn upsert_refresh_token(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO refresh_tokens (id, token, user_id, jti, expires_at)
+        INSERT INTO refresh_tokens (id, token, user_id, expires_at)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (user_id)
         DO UPDATE SET
