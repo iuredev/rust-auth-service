@@ -1,7 +1,10 @@
 use rust_auth_service::{
-    auth::auth::{ generate_tokens, decode_access_token },
-    models::{ auth::{ Login, Claims, TokenType }, user::User },
-    services::password::{ hash_password, verify_password },
+    auth::auth::{decode_access_token, generate_tokens},
+    models::{
+        auth::{Claims, Login, TokenType},
+        user::User,
+    },
+    services::password::{hash_password, verify_password},
 };
 use uuid::Uuid;
 
@@ -10,13 +13,10 @@ fn should_hash_password_correctly() {
     let password = "my_password_123";
     let hashed = hash_password(password).unwrap();
 
-    // Hash should be different from original password
     assert_ne!(hashed, password);
 
-    // Hash should be long (Argon2 produces long hashes)
     assert!(hashed.len() > 50);
 
-    // Should start with $argon2id$ (Argon2 identifier)
     assert!(hashed.starts_with("$argon2id$"));
 }
 
@@ -25,11 +25,9 @@ fn should_verify_password_correctly() {
     let password = "my_password_123";
     let hashed = hash_password(password).unwrap();
 
-    // Correct password should verify
     let is_valid = verify_password(&hashed, password).unwrap();
     assert!(is_valid);
 
-    // Wrong password should not verify
     let is_invalid = verify_password(&hashed, "wrong_password").unwrap();
     assert!(!is_invalid);
 }
@@ -70,18 +68,16 @@ fn should_generate_access_and_refresh_tokens() {
     let user = User::new(
         "Test User".to_string(),
         "test@example.com".to_string(),
-        "password123".to_string()
+        "password123".to_string(),
     );
 
     let (access_token, refresh_token) = generate_tokens(&user).unwrap();
 
     assert_ne!(access_token, refresh_token);
 
-    // Tokens should have JWT format (3 parts separated by dots)
     assert_eq!(access_token.matches('.').count(), 2);
     assert_eq!(refresh_token.matches('.').count(), 2);
 
-    // Tokens não devem estar vazios
     assert!(!access_token.trim().is_empty(), "Access token is empty");
     assert!(!refresh_token.trim().is_empty(), "Refresh token is empty");
 }
@@ -95,7 +91,7 @@ fn should_have_unique_jti_for_each_token() {
     let user = User::new(
         "Test User".to_string(),
         "test@example.com".to_string(),
-        "password123".to_string()
+        "password123".to_string(),
     );
 
     let (access_token1, refresh_token1) = generate_tokens(&user).unwrap();
@@ -106,7 +102,6 @@ fn should_have_unique_jti_for_each_token() {
     let access_claims2 = decode_access_token(&access_token2).unwrap();
     let refresh_claims2 = decode_access_token(&refresh_token2).unwrap();
 
-    // Each token should have unique JTI
     assert_ne!(access_claims1.jti, refresh_claims1.jti);
     assert_ne!(access_claims1.jti, access_claims2.jti);
     assert_ne!(refresh_claims1.jti, refresh_claims2.jti);
@@ -267,10 +262,8 @@ fn should_handle_multiple_password_hashes() {
     let hash1 = hash_password(password).unwrap();
     let hash2 = hash_password(password).unwrap();
 
-    // Each hash should be different (due to different salts)
     assert_ne!(hash1, hash2);
 
-    // Both should verify correctly
     assert!(verify_password(&hash1, password).unwrap());
     assert!(verify_password(&hash2, password).unwrap());
 }
@@ -283,10 +276,8 @@ fn should_handle_case_sensitive_passwords() {
     let hash1 = hash_password(password1).unwrap();
     let hash2 = hash_password(password2).unwrap();
 
-    // Different passwords should produce different hashes
     assert_ne!(hash1, hash2);
 
-    // Each should only verify with its own password
     assert!(verify_password(&hash1, password1).unwrap());
     assert!(!verify_password(&hash1, password2).unwrap());
     assert!(verify_password(&hash2, password2).unwrap());
