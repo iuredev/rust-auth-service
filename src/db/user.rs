@@ -98,14 +98,18 @@ pub async fn delete_user(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<(), My
     Ok(())
 }
 
-pub async fn get_user_by_email(pool: &Pool<Postgres>, email: String) -> Result<User, MyError> {
+pub async fn get_user_by_email(
+    pool: &Pool<Postgres>,
+    email: String,
+) -> Result<Option<User>, MyError> {
+    let email = email.trim().to_lowercase();
+
     let user = sqlx::query_as::<_, User>(
         "SELECT id, name, email, password, created_at, updated_at FROM users WHERE email = $1",
     )
     .bind(email)
     .fetch_optional(pool)
-    .await?
-    .ok_or(MyError::NotFound);
+    .await?;
 
-    Ok(user.unwrap())
+    Ok(user)
 }

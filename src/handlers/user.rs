@@ -1,4 +1,4 @@
-use crate::db::user::{create_user, delete_user, get_user_by_id, update_user};
+use crate::db::user::{create_user, delete_user, get_user_by_email, get_user_by_id, update_user};
 use crate::errors::my_error::MyError;
 use crate::models::{
     app::AppState,
@@ -17,13 +17,20 @@ pub async fn get_user_handler(
 }
 
 pub async fn create_user_handler(
-    State(app_state): State<AppState>, // Mude de Pool<Postgres> para AppState
+    State(app_state): State<AppState>,
     Json(payload): Json<UserRegister>,
 ) -> Result<Json<UserOutput>, MyError> {
     if payload.name.is_none() || payload.email.is_none() || payload.password.is_none() {
         return Err(MyError::Validation(
             "Name, email and password are required".to_string(),
         ));
+    }
+
+    let exist_user =
+        get_user_by_email(&app_state.pool, Option::expect(payload.email.clone(), "")).await?;
+
+    if exist_user.is_some() {
+        return Err(MyError::Validation("User already exists".to_string()));
     }
 
     let user: UserRegister = UserRegister {
@@ -38,7 +45,7 @@ pub async fn create_user_handler(
 }
 
 pub async fn update_user_handler(
-    State(app_state): State<AppState>, // Mude de Pool<Postgres> para AppState
+    State(app_state): State<AppState>,
     Path(user_id): Path<uuid::Uuid>,
     Json(mut payload): Json<UserRegister>,
 ) -> Result<Json<UserOutput>, MyError> {
@@ -65,7 +72,7 @@ pub async fn update_user_handler(
 }
 
 pub async fn delete_user_handler(
-    State(app_state): State<AppState>, // Mude de Pool<Postgres> para AppState
+    State(app_state): State<AppState>,
     Path(user_id): Path<uuid::Uuid>,
 ) -> Result<Json<String>, MyError> {
     delete_user(&app_state.pool, user_id).await?;
