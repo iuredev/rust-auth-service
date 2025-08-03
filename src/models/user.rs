@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::{ DateTime, Utc };
+use serde::{ Deserialize, Serialize };
 
 use crate::services::password::hash_password;
 
@@ -34,14 +34,15 @@ impl User {
         let name = name.trim().to_string();
         let email = email.trim().to_string().to_lowercase();
         let password = password.trim().to_string();
+        let now = Utc::now();
 
         Self {
             id: uuid::Uuid::new_v4(),
             name,
             email,
             password: hash_password(password.as_str()).unwrap(),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
+            created_at: now,
+            updated_at: now,
         }
     }
 }
