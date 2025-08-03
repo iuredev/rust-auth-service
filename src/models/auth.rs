@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use sqlx::Type;
 
 #[derive(Deserialize)]
 pub struct Login {
@@ -12,6 +13,13 @@ pub struct TokenResponse {
     pub refresh_token: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Type)]
+#[sqlx(type_name = "token_type", rename_all = "lowercase")]
+pub enum TokenType {
+    Access,
+    Refresh,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Claims {
     pub sub: uuid::Uuid,
@@ -20,6 +28,7 @@ pub struct Claims {
     pub jti: String,
     pub iat: usize,
     pub exp: usize,
+    pub token_type: TokenType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -39,4 +48,9 @@ impl RefreshToken {
             expires_at: chrono::Utc::now() + chrono::Duration::days(7),
         }
     }
+}
+
+#[derive(Deserialize)]
+pub struct RefreshTokenInput {
+    pub refresh_token: String,
 }
