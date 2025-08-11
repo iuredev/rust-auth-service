@@ -22,6 +22,7 @@ pub fn routes(state: &AppState) -> Router<AppState> {
 
     let protected = Router::new()
         .route("/logout", post(logout_handler))
+        // Users
         .route("/users/{user_id}", get(get_user_handler))
         .route("/users/{user_id}", patch(update_user_handler))
         .route("/users/{user_id}", delete(delete_user_handler))
