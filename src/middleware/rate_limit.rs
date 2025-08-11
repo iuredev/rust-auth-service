@@ -30,8 +30,6 @@ pub async fn rate_limit_middleware(
 
     let limit: i32 = redis_conn.incr(&key, 1).await.unwrap();
 
-    println!("Rate limit: {}", limit);
-
     if limit == 1 {
         redis_conn.expire::<_, ()>(&key, 60).await.unwrap();
     }
