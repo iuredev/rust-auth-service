@@ -59,11 +59,13 @@ fn should_verify_password_with_spaces() {
     assert!(is_valid);
 }
 
-#[test]
-fn should_generate_access_and_refresh_tokens() {
+#[tokio::test]
+async fn should_generate_access_and_refresh_tokens() {
     unsafe {
         std::env::set_var("JWT_SECRET", "test-secret-key-for-testing-only");
     }
+    let pool = sqlx::PgPool::connect_lazy("postgres://postgres:postgres@localhost/auth_db")
+           .expect("Failed to create pool");
 
     let user = User::new(
         "Test User".to_string(),
@@ -71,7 +73,7 @@ fn should_generate_access_and_refresh_tokens() {
         "password123".to_string(),
     );
 
-    let (access_token, refresh_token) = generate_tokens(&user).unwrap();
+    let (access_token, refresh_token) = generate_tokens(&pool, &user).await.unwrap();
 
     assert_ne!(access_token, refresh_token);
 
@@ -82,8 +84,8 @@ fn should_generate_access_and_refresh_tokens() {
     assert!(!refresh_token.trim().is_empty(), "Refresh token is empty");
 }
 
-#[test]
-fn should_have_unique_jti_for_each_token() {
+#[tokio::test]
+async fn should_have_unique_jti_for_each_token() {
     unsafe {
         std::env::set_var("JWT_SECRET", "test-secret-key-for-testing-only");
     }
@@ -93,9 +95,11 @@ fn should_have_unique_jti_for_each_token() {
         "test@example.com".to_string(),
         "password123".to_string(),
     );
+    let pool = sqlx::PgPool::connect_lazy("postgres://postgres:postgres@localhost/auth_db")
+           .expect("Failed to create pool");
 
-    let (access_token1, refresh_token1) = generate_tokens(&user).unwrap();
-    let (access_token2, refresh_token2) = generate_tokens(&user).unwrap();
+    let (access_token1, refresh_token1) = generate_tokens(&pool,&user).await.unwrap();
+    let (access_token2, refresh_token2) = generate_tokens(&pool,&user).await.unwrap();
 
     let access_claims1 = decode_access_token(&access_token1).unwrap();
     let refresh_claims1 = decode_access_token(&refresh_token1).unwrap();
@@ -219,6 +223,7 @@ fn should_handle_claims_creation() {
         sub: user_id,
         email: email.clone(),
         jti: jti.clone(),
+        roles: vec![],
         iat,
         exp,
         token_type: TokenType::Access,
@@ -238,6 +243,7 @@ fn should_handle_refresh_token_type() {
         sub: Uuid::new_v4(),
         email: "test@example.com".to_string(),
         jti: Uuid::new_v4().to_string(),
+        roles: vec![],
         iat: chrono::Utc::now().timestamp() as usize,
         exp: (chrono::Utc::now().timestamp() as usize) + 604800,
         token_type: TokenType::Refresh,
