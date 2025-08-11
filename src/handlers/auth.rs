@@ -8,8 +8,7 @@ use redis::AsyncCommands;
 use crate::{
     auth::auth::{generate_tokens, validate_jwt},
     db::{
-        auth::{revoke_refresh_token, upsert_refresh_token},
-        user::get_user_by_email,
+        auth::{revoke_refresh_token, upsert_refresh_token}, user::get_user_by_email
     },
     errors::my_error::MyError,
     models::{
@@ -45,7 +44,7 @@ pub async fn login_handler(
         ));
     }
 
-    let (access_token, refresh_token) = generate_tokens(&user)?;
+    let (access_token, refresh_token) = generate_tokens(&app_state.pool, &user).await?;
 
     let _ = upsert_refresh_token(&app_state.pool, user.id, &refresh_token).await;
 
@@ -128,7 +127,7 @@ pub async fn refresh_token_handler(
             .map_err(|_| MyError::Internal)?;
     }
 
-    let (access_token, refresh_token) = generate_tokens(&user).unwrap();
+    let (access_token, refresh_token) = generate_tokens(&app_state.pool, &user).await?;
 
     let _ = upsert_refresh_token(&app_state.pool, user.id, &refresh_token).await;
 

@@ -1,15 +1,19 @@
 use jsonwebtoken::{ Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode };
 use redis::{ AsyncCommands, aio::ConnectionManager };
+use sqlx::{Pool, Postgres};
 
-use crate::{ errors::my_error::MyError, models::{ auth::{ Claims, TokenType }, user::User } };
+use crate::{ db::role::get_user_roles, errors::my_error::MyError, models::{ auth::{ Claims, TokenType }, user::User } };
 
-pub fn generate_tokens(user: &User) -> Result<(String, String), MyError> {
+pub async fn generate_tokens(pool: &Pool<Postgres>, user: &User) -> Result<(String, String), MyError> {
+
+    let roles = get_user_roles(&pool, user.id).await?;
+
     let now = chrono::Utc::now().timestamp() as usize;
 
     let access_claim = Claims {
         sub: user.id,
         email: user.email.clone(),
-        // role: user.role.clone(),
+        roles: roles.clone(),
         jti: uuid::Uuid::new_v4().to_string(),
         iat: now,
         exp: now + 60 * 15,
@@ -19,7 +23,7 @@ pub fn generate_tokens(user: &User) -> Result<(String, String), MyError> {
     let refresh_claim = Claims {
         sub: user.id,
         email: user.email.clone(),
-        // role: user.role.clone(),
+        roles: roles.clone(),
         jti: uuid::Uuid::new_v4().to_string(),
         iat: now,
         exp: now + 60 * 60 * 24 * 7,

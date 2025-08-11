@@ -1,6 +1,5 @@
 use crate::{
-    errors::my_error::MyError,
-    models::user::{User, UserOutput, UserRegister},
+    db::role::{get_default_role, set_user_role}, errors::my_error::MyError, models::user::{User, UserOutput, UserRegister, UserWithRoles}
 };
 use chrono::Utc;
 use sqlx::{Pool, Postgres};
@@ -29,22 +28,36 @@ pub async fn create_user(pool: &Pool<Postgres>, user: UserRegister) -> Result<Us
     .fetch_one(pool)
     .await?;
 
+    let get_default_role = get_default_role(pool).await?;
+    let _ = set_user_role(pool, user.id, get_default_role.id).await?;
+
     Ok(result)
 }
 
-pub async fn get_user_by_id(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<UserOutput, MyError> {
-    let user = sqlx::query_as::<_, UserOutput>(
-        "SELECT id, name, email, created_at, updated_at FROM users WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_one(pool)
-    .await;
+pub async fn get_user_by_id(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<UserWithRoles, MyError> {
+    let user = sqlx::query_as!(
+            UserWithRoles,
+            r#"
+            SELECT
+                u.id,
+                u.name,
+                u.email,
+                u.created_at,
+                u.updated_at,
+                COALESCE(ARRAY_AGG(r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS "roles!"
+            FROM users u
+            LEFT JOIN user_roles ur ON ur.user_id = u.id
+            LEFT JOIN roles r ON r.id = ur.role_id
+            WHERE u.id = $1
+            GROUP BY u.id
+            "#,
+            id
+        )
+        .fetch_one(pool)
+        .await
+        .map_err(|_| MyError::NotFound)?;
 
-    if user.is_err() {
-        return Err(MyError::NotFound);
-    }
-
-    Ok(user.unwrap())
+    Ok(user)
 }
 
 pub async fn get_users(pool: &Pool<Postgres>) -> Result<Vec<UserOutput>, MyError> {
@@ -63,8 +76,8 @@ pub async fn update_user(
 ) -> Result<UserOutput, MyError> {
     let user = sqlx::query_as::<_, UserOutput>(
         r#"
-            UPDATE users SET name = COALESCE($1, name), 
-            email = COALESCE($2, email), 
+            UPDATE users SET name = COALESCE($1, name),
+            email = COALESCE($2, email),
             password = COALESCE($3, password),
             updated_at = COALESCE($5, updated_at)
             WHERE id = $4 RETURNING id, name, email, created_at, updated_at

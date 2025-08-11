@@ -1,5 +1,7 @@
 use crate::db::user::{create_user, delete_user, get_user_by_email, get_user_by_id, update_user};
 use crate::errors::my_error::MyError;
+
+use crate::models::user::UserWithRoles;
 use crate::models::{
     app::AppState,
     user::{UserOutput, UserRegister},
@@ -10,7 +12,7 @@ use axum::extract::{Json, Path, State};
 pub async fn get_user_handler(
     State(app_state): State<AppState>,
     Path(user_id): Path<uuid::Uuid>,
-) -> Result<Json<UserOutput>, MyError> {
+) -> Result<Json<UserWithRoles>, MyError> {
     let user = get_user_by_id(&app_state.pool, user_id).await?;
 
     Ok(Json(user))
@@ -40,6 +42,8 @@ pub async fn create_user_handler(
     };
 
     let result = create_user(&app_state.pool, user).await?;
+
+
 
     Ok(Json(result))
 }

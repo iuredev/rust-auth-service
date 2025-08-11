@@ -14,25 +14,23 @@ use axum::{
 
 pub fn routes(state: &AppState) -> Router<AppState> {
     let root_router = Router::new().route("/", get(|| async { "Hello, World!" }));
-    let user_router = Router::new()
-        .route("/users/{user_id}", get(get_user_handler))
+
+    let public = Router::new()
+        .route("/refresh", post(refresh_token_handler))
         .route("/users", post(create_user_handler))
-        .route("/users/{user_id}", patch(update_user_handler))
-        .route("/users/{user_id}", delete(delete_user_handler))
         .route("/login", post(login_handler));
 
-    // protected router
     let protected = Router::new()
         .route("/logout", post(logout_handler))
+        .route("/users/{user_id}", get(get_user_handler))
+        .route("/users/{user_id}", patch(update_user_handler))
+        .route("/users/{user_id}", delete(delete_user_handler))
         .layer(from_fn_with_state(state.clone(), auth_middleware))
         .layer(from_fn_with_state(state.clone(), rate_limit_middleware));
 
-    let refresh = Router::new().route("/refresh", post(refresh_token_handler));
-
     let app_routes = Router::new()
         .merge(root_router)
-        .merge(user_router)
-        .merge(refresh)
+        .merge(public)
         .merge(protected);
 
     let app = Router::new().nest("/api", app_routes);

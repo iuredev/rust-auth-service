@@ -41,7 +41,6 @@ where
 }
 
 // common middleware
-
 pub async fn auth_middleware(
     State(app_state): State<AppState>,
     mut request: Request<Body>,
