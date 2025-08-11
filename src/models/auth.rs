@@ -22,12 +22,12 @@ pub enum TokenType {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Claims {
-    pub sub: uuid::Uuid,
+    pub sub: uuid::Uuid, // user_id
     pub email: String,
-    // pub role: String,
-    pub jti: String,
-    pub iat: usize,
-    pub exp: usize,
+    pub roles: Vec<String>, // ["Admin", "User"]
+    pub jti: String, //
+    pub iat: usize, //
+    pub exp: usize, //
     pub token_type: TokenType,
 }
 

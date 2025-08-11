@@ -20,6 +20,18 @@ pub struct UserOutput {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct UserWithRoles {
+    pub id: uuid::Uuid,
+    pub name: String,
+    pub email: String,
+    pub roles: Vec<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
     pub id: uuid::Uuid,
     pub name: String,

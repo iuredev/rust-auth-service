@@ -1,23 +1,32 @@
-// for now this module does not will be used
-use uuid;
+use uuid::{self, Uuid};
 use serde::{ Serialize, Deserialize };
 use chrono::{ DateTime, Utc };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Role {
     pub id: uuid::Uuid,
     pub name: String,
-    pub description: String,
+    pub description: Option<String>,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct UserRole {
+    pub user_id: Uuid,
+    pub role_id: Uuid
 }
 
 impl Role {
-    pub fn new(name: String, description: String) -> Self {
+    pub fn new(name: String, description: Option<String>) -> Self {
+        let now =  Utc::now();
+
         Role {
             id: uuid::Uuid::new_v4(),
             description,
             name,
-            created_at: Utc::now(),
+            created_at: now,
+            updated_at: now
         }
     }
 }
