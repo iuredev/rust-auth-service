@@ -1,5 +1,6 @@
 use axum::{body::Body, extract::State, http::Request, middleware::Next, response::Response};
 use redis::AsyncCommands;
+use std::net::IpAddr;
 
 use crate::{errors::my_error::MyError, models::app::AppState};
 
@@ -14,9 +15,12 @@ pub async fn rate_limit_middleware(
     let client_ip = headers
         .get("x-forwarded-for")
         .and_then(|ip| ip.to_str().ok())
-        .and_then(|ip| ip.split(',').next())
-        .or_else(|| headers.get("x-real-ip").and_then(|ip| ip.to_str().ok()))
-        .unwrap_or("unknown");
+        .and_then(|ip| ip.split(',').next().map(|s| s.trim()))
+        .filter(|ip| ip.parse::<IpAddr>().is_ok())
+        .or_else(|| headers.get("x-real-ip").and_then(|ip| ip.to_str().ok()).filter(|ip| ip.parse::<IpAddr>().is_ok()))
+        .or_else(|| headers.get("cf-connecting-ip").and_then(|ip| ip.to_str().ok()).filter(|ip| ip.parse::<IpAddr>().is_ok()))
+        .unwrap_or("unknown")
+        .to_string();
 
     println!("Client IP: {}", &client_ip);
 
