@@ -78,6 +78,8 @@ pub async fn login_handler(
 //     })))
 // }
 
+
+
 // HANDLER USED WITH MIDDLEWARE AUTH
 #[utoipa::path(
     post,
@@ -127,7 +129,6 @@ pub async fn refresh_token_handler(
     let mut redis_conn = app_state.redis;
     let claims = validate_jwt(&mut redis_conn, payload.refresh_token.as_str()).await?;
 
-    println!("Claims: {:#?}", claims);
 
     if claims.token_type != TokenType::Refresh {
         return Err(MyError::Validation("Invalid token".to_string()));
