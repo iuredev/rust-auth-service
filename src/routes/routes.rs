@@ -18,7 +18,8 @@ pub fn routes(state: &AppState) -> Router<AppState> {
     let public = Router::new()
         .route("/refresh", post(refresh_token_handler))
         .route("/users", post(create_user_handler))
-        .route("/login", post(login_handler));
+        .route("/login", post(login_handler))
+        .route("/health", get(|| async { "OK" }));
 
     let protected = Router::new()
         .route("/logout", post(logout_handler))
