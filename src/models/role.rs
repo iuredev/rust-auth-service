@@ -1,8 +1,9 @@
 use uuid::{self, Uuid};
 use serde::{ Serialize, Deserialize };
 use chrono::{ DateTime, Utc };
+use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Role {
     pub id: uuid::Uuid,
     pub name: String,

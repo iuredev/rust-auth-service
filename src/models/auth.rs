@@ -1,26 +1,27 @@
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
+use utoipa::ToSchema;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct Login {
     pub email: String,
     pub password: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct TokenResponse {
     pub access_token: String,
     pub refresh_token: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Type)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Type, ToSchema)]
 #[sqlx(type_name = "token_type", rename_all = "lowercase")]
 pub enum TokenType {
     Access,
     Refresh,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 pub struct Claims {
     pub sub: uuid::Uuid, // user_id
     pub email: String,
@@ -50,7 +51,7 @@ impl RefreshToken {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct RefreshTokenInput {
     pub refresh_token: String,
 }

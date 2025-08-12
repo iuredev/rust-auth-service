@@ -9,6 +9,19 @@ use crate::models::{
 use crate::services::password::hash_password;
 use axum::extract::{Json, Path, State};
 
+#[utoipa::path(
+    get,
+    path = "/api/users/{user_id}",
+    params(
+        ("user_id" = uuid::Uuid, Path, description = "User ID")
+    ),
+    responses(
+        (status = 200, description = "User retrieved successfully", body = UserWithRoles),
+        (status = 404, description = "User not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "users"
+)]
 pub async fn get_user_handler(
     State(app_state): State<AppState>,
     Path(user_id): Path<uuid::Uuid>,
@@ -18,6 +31,17 @@ pub async fn get_user_handler(
     Ok(Json(user))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/users",
+    request_body = UserRegister,
+    responses(
+        (status = 200, description = "User created successfully", body = UserOutput),
+        (status = 400, description = "Validation error"),
+        (status = 409, description = "User already exists"),
+    ),
+    tag = "users"
+)]
 pub async fn create_user_handler(
     State(app_state): State<AppState>,
     Json(payload): Json<UserRegister>,
@@ -48,6 +72,21 @@ pub async fn create_user_handler(
     Ok(Json(result))
 }
 
+#[utoipa::path(
+    patch,
+    path = "/api/users/{user_id}",
+    params(
+        ("user_id" = uuid::Uuid, Path, description = "User ID")
+    ),
+    request_body = UserRegister,
+    responses(
+        (status = 200, description = "User updated successfully", body = UserOutput),
+        (status = 400, description = "Validation error"),
+        (status = 404, description = "User not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "users"
+)]
 pub async fn update_user_handler(
     State(app_state): State<AppState>,
     Path(user_id): Path<uuid::Uuid>,
@@ -75,6 +114,19 @@ pub async fn update_user_handler(
     Ok(Json(result))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/users/{user_id}",
+    params(
+        ("user_id" = uuid::Uuid, Path, description = "User ID")
+    ),
+    responses(
+        (status = 200, description = "User deleted successfully", body = String),
+        (status = 404, description = "User not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "users"
+)]
 pub async fn delete_user_handler(
     State(app_state): State<AppState>,
     Path(user_id): Path<uuid::Uuid>,

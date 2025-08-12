@@ -18,6 +18,17 @@ use crate::{
     services::password::verify_password,
 };
 
+#[utoipa::path(
+    post,
+    path = "/api/login",
+    request_body = Login,
+    responses(
+        (status = 200, description = "Login successful", body = TokenResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Invalid credentials"),
+    ),
+    tag = "auth"
+)]
 pub async fn login_handler(
     State(app_state): State<AppState>,
     Json(payload): Json<Login>,
@@ -68,6 +79,18 @@ pub async fn login_handler(
 // }
 
 // HANDLER USED WITH MIDDLEWARE AUTH
+#[utoipa::path(
+    post,
+    path = "/api/logout",
+    responses(
+        (status = 200, description = "Logout successful"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "auth"
+)]
 pub async fn logout_handler(
     Extension(claims): Extension<Claims>,
     State(app_state): State<AppState>,
@@ -86,6 +109,17 @@ pub async fn logout_handler(
     })))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/refresh",
+    request_body = RefreshTokenInput,
+    responses(
+        (status = 200, description = "Token refreshed successfully", body = TokenResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Invalid refresh token"),
+    ),
+    tag = "auth"
+)]
 pub async fn refresh_token_handler(
     State(app_state): State<AppState>,
     Json(payload): Json<RefreshTokenInput>,

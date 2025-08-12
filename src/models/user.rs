@@ -1,16 +1,17 @@
 use chrono::{ DateTime, Utc };
 use serde::{ Deserialize, Serialize };
+use utoipa::ToSchema;
 
 use crate::services::password::hash_password;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UserRegister {
     pub name: Option<String>,
     pub email: Option<String>,
     pub password: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct UserOutput {
     pub id: uuid::Uuid,
     pub name: String,
@@ -19,7 +20,7 @@ pub struct UserOutput {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct UserWithRoles {
     pub id: uuid::Uuid,
     pub name: String,
