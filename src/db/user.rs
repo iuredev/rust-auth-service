@@ -62,7 +62,7 @@ pub async fn get_user_by_id(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<Use
 
 pub async fn get_users(pool: &Pool<Postgres>) -> Result<Vec<UserOutput>, MyError> {
     let users =
-        sqlx::query_as::<_, UserOutput>("SELECT id name, email, created_at, updated_at FROM users")
+        sqlx::query_as::<_, UserOutput>("SELECT id, name, email, created_at, updated_at FROM users")
             .fetch_all(pool)
             .await?;
 
@@ -91,15 +91,13 @@ pub async fn update_user(
     .fetch_one(pool)
     .await;
 
-    if user.is_err() {
-        match user.as_ref().unwrap_err() {
-            sqlx::Error::RowNotFound => return Err(MyError::NotFound),
-            sqlx::Error::Database(_) => return Err(MyError::DatabaseError(user.unwrap_err())),
-            _ => return Err(MyError::Internal),
-        };
+    let user = match user {
+        Ok(u) => u,
+        Err(sqlx::Error::RowNotFound) => return Err(MyError::NotFound),
+        Err(e) => return Err(MyError::DatabaseError(e)),
     };
 
-    Ok(user.unwrap())
+    Ok(user)
 }
 
 pub async fn delete_user(pool: &Pool<Postgres>, id: uuid::Uuid) -> Result<(), MyError> {
