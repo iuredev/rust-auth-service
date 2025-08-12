@@ -7,11 +7,25 @@ use rust_auth_service::{
 };
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "rust_auth_service=debug,tower_http=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+    tracing::info!("Starting Rust Auth Service...");
+
     let pool = init_pool().await;
     let redis = init_redis().await;
+
+    tracing::info!("Pool initialized");
+    tracing::info!("Redis initialized");
 
     let app_state = AppState { pool, redis };
 
@@ -24,7 +38,7 @@ async fn main() {
         .await
         .unwrap();
 
-    println!("Listening on http://localhost:4000");
+    tracing::info!("Listening on http://localhost:4000");
 
     axum::serve(listener, app).await.unwrap();
 }
