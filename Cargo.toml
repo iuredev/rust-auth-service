@@ -44,3 +44,7 @@ dotenvy = "^0.15.7"
 
 #Redis
 redis = { version = "0.32", features = ["tokio-comp", "connection-manager"] }
+
+#Documentation
+utoipa = { version = "5.4.0", features = ["axum_extras", "chrono", "uuid"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
