@@ -7,8 +7,6 @@ pub async fn get_user_roles(pool: &Pool<Postgres>, user_id: Uuid) -> Result<Vec<
 
     let user_roles = sqlx::query_scalar!(r#"SELECT r.name FROM roles r INNER JOIN user_roles ur ON ur.role_id = r.id WHERE ur.user_id = $1"#, user_id).fetch_all(pool).await?;
 
-    println!("User Roles, {:#?}", user_roles);
-
     Ok(user_roles)
 }
 
@@ -37,3 +35,9 @@ pub async fn set_user_role(
 
         Ok(())
     }
+
+pub async fn get_role_by_name(pool: &Pool<Postgres>, name: String) -> Result<Role, MyError> {
+    let role = sqlx::query_as!(Role, r#"SELECT * FROM roles WHERE name = $1"#, name).fetch_one(pool).await?;
+
+    Ok(role)
+}
