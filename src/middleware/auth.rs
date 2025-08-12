@@ -7,7 +7,7 @@ use axum::{
 };
 
 use headers::{Authorization, HeaderMapExt, authorization::Bearer};
-use std::future::Future;
+use std::{future::Future, pin::Pin};
 
 use crate::{
     auth::auth::{decode_access_token, validate_jwt},
@@ -15,7 +15,7 @@ use crate::{
     models::{app::AppState, auth::Claims},
 };
 
-// middeware Extractor Pattern Axum
+// Middleware Extractor Pattern Axum (you can se how to use it in the )
 impl<S> FromRequestParts<S> for Claims
 where
     S: Send + Sync,
@@ -62,4 +62,26 @@ pub async fn auth_middleware(
     println!("Request took {} ms", started_at.elapsed().as_millis());
 
     Ok(next.run(request).await)
+}
+
+pub fn require_role(
+    required_roles: Vec<String>,
+) -> impl Clone + Send + Sync + 'static + Fn(Request<Body>, Next) -> Pin<Box<dyn Future<Output = Result<Response<Body>, MyError>> + Send>>
+{
+    move | req: Request<Body>, next: Next| {
+        let required_roles = required_roles.clone();
+
+        Box::pin(async move {
+            let claims = req.extensions().get::<Claims>().cloned().ok_or(MyError::Unauthorized)?;
+            let has_role = claims.roles.iter().any(|role| {
+                println!("Role: {}", role);
+                required_roles.contains(role)});
+
+            if !has_role {
+                return Err(MyError::Unauthorized);
+            }
+
+            Ok(next.run(req).await)
+        })
+    }
 }

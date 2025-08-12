@@ -3,12 +3,12 @@ use crate::{
         auth::{login_handler, logout_handler, refresh_token_handler},
         user::{create_user_handler, delete_user_handler, get_user_handler, update_user_handler},
     },
-    middleware::{auth::auth_middleware, rate_limit::rate_limit_middleware},
+    middleware::{auth::{auth_middleware, require_role}, rate_limit::rate_limit_middleware},
     models::app::AppState,
 };
 use axum::{
     Router,
-    middleware::from_fn_with_state,
+    middleware::{from_fn,from_fn_with_state},
     routing::{delete, get, patch, post},
 };
 
@@ -29,10 +29,17 @@ pub fn routes(state: &AppState) -> Router<AppState> {
         .layer(from_fn_with_state(state.clone(), auth_middleware))
         .layer(from_fn_with_state(state.clone(), rate_limit_middleware));
 
+    let admin_router = Router::new()
+        .route("/admin", get(|| async { "Route only for Admin" }))
+        .layer(from_fn(require_role(vec!["Admin".to_string()])))
+        .layer(from_fn_with_state(state.clone(), auth_middleware));
+
     let app_routes = Router::new()
+        .merge(admin_router)
         .merge(root_router)
         .merge(public)
         .merge(protected);
+
 
     let app = Router::new().nest("/api", app_routes);
 
